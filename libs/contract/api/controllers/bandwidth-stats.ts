@@ -21,6 +21,8 @@ export const BANDWIDTH_STATS_ROUTES = {
     },
     USERS: {
         GET_BY_ID: (userId: string) => `${userId}`,
+        // GET /bandwidth-stats/users/:userId/inbounds –– Users -> User -> Show Usage by inbound
+        GET_INBOUNDS_BY_ID: (userId: string) => `${userId}/inbounds`,
     },
     INTERNAL_SQUADS: {
         GET_USAGE: (uuid: string) => `${uuid}/usage`,

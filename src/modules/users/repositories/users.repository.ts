@@ -1167,6 +1167,7 @@ export class UsersRepository {
                             'configProfileInbounds.security',
                             'configProfileInbounds.port',
                             'configProfileInbounds.rawInbound',
+                            'configProfileInbounds.trackUserUsage',
                         ])
                         .whereRef('internalSquadMembers.userId', '=', 'users.id'),
                 )
@@ -1220,6 +1221,7 @@ export class UsersRepository {
                             'configProfileInbounds.security',
                             'configProfileInbounds.port',
                             'configProfileInbounds.rawInbound',
+                            'configProfileInbounds.trackUserUsage',
                         ])
                         .whereRef('internalSquadMembers.userId', '=', 'users.id'),
                 )

@@ -7,7 +7,7 @@ import { CommandBus } from '@nestjs/cqrs';
 
 import { GetUsersStatsCommand } from '@remnawave/node-contract';
 
-import { AxiosService } from '@common/axios';
+import { AxiosService, INodeConnectionOpts } from '@common/axios';
 import { TypedConfigService } from '@common/config/app-config';
 import { RawCacheService } from '@common/raw-cache';
 import { multiplyConsumption } from '@common/utils/nano';
@@ -17,6 +17,11 @@ import {
     INTERNAL_CACHE_KEYS,
     INTERNAL_CACHE_KEYS_TTL,
 } from '@libs/contracts/constants';
+
+import {
+    BulkUpsertInboundUserHistoryEntryCommand,
+    IInboundUserUsageEntry,
+} from '@modules/config-profile-inbounds-user-usage-history/commands/bulk-upsert-inbound-user-history-entry';
 
 import { UsersQueuesService } from '@queue/_users';
 import { PushFromRedisQueueService } from '@queue/push-from-redis/push-from-redis.service';
@@ -47,7 +52,14 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
 
     async process(job: Job<IRecordUserUsagePayload>) {
         try {
-            const { nodeUuid, connectionOpts, consumptionMultiplier, nodeId } = job.data;
+            const { nodeUuid, connectionOpts, consumptionMultiplier, nodeId, trackInboundUserUsage } =
+                job.data;
+
+            // Opt-in per-user-per-inbound usage. Fully isolated (own try/catch) so it
+            // can never affect the billing-critical per-user usage handling below.
+            if (trackInboundUserUsage) {
+                await this.recordInboundUserUsage(nodeUuid, connectionOpts);
+            }
 
             const queryResult = await this.axios.getUsersStats(
                 {
@@ -174,6 +186,65 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
                     })}`,
                 );
             }
+        }
+    }
+
+    private async recordInboundUserUsage(
+        nodeUuid: string,
+        connectionOpts: INodeConnectionOpts,
+    ): Promise<void> {
+        try {
+            const response = await this.axios.getUsersInboundsStats(
+                {
+                    reset: true,
+                },
+                {
+                    address: connectionOpts.address,
+                    port: connectionOpts.port,
+                    proxyUrl: connectionOpts.proxyUrl,
+                },
+            );
+
+            if (!response.isOk || !response.response) {
+                return;
+            }
+
+            const rows = response.response.response.usersInbounds;
+            if (rows.length === 0) {
+                return;
+            }
+
+            const entries: IInboundUserUsageEntry[] = [];
+
+            rows.forEach((row) => {
+                const { ok } = t(() => BigInt(row.username));
+
+                if (!ok) {
+                    return;
+                }
+
+                const totalBytes = row.downlink + row.uplink;
+
+                if (totalBytes < this.ignoreBelowBytes) {
+                    return;
+                }
+
+                entries.push({
+                    tag: row.inboundTag,
+                    userId: BigInt(row.username),
+                    totalBytes: BigInt(totalBytes),
+                });
+            });
+
+            if (entries.length > 0) {
+                await this.commandBus.execute(
+                    new BulkUpsertInboundUserHistoryEntryCommand(entries),
+                );
+            }
+        } catch (error) {
+            this.logger.error(
+                `Error recording inbound user usage for node ${nodeUuid}: ${error}`,
+            );
         }
     }
 }

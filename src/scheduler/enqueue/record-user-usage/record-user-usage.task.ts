@@ -38,6 +38,7 @@ export class RecordUserUsageTask {
                     consumptionMultiplier: node.consumptionMultiplier.toString(),
                     nodeId: node.id.toString(),
                     connectionOpts: node.connectionOpts,
+                    trackInboundUserUsage: node.trackInboundUserUsage,
                 })),
             );
 

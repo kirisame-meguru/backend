@@ -12,6 +12,8 @@ export class ConfigProfileInboundEntity implements ConfigProfileInbounds {
 
     public rawInbound: object | null;
 
+    public trackUserUsage: boolean;
+
     constructor(configProfileInbound: Partial<ConfigProfileInbounds>) {
         Object.assign(this, configProfileInbound);
         return this;

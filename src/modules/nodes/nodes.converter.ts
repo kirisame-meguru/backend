@@ -24,6 +24,7 @@ const entityToModel = (entity: NodesEntity): Nodes => {
         lastStatusChange: entity.lastStatusChange,
         lastStatusMessage: entity.lastStatusMessage,
         isTrafficTrackingActive: entity.isTrafficTrackingActive,
+        trackInboundUserUsage: entity.trackInboundUserUsage,
         trafficResetDay: entity.trafficResetDay,
         trafficLimitBytes: entity.trafficLimitBytes,
         trafficUsedBytes: entity.trafficUsedBytes,

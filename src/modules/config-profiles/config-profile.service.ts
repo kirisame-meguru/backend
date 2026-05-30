@@ -301,6 +301,25 @@ export class ConfigProfileService {
         return true;
     }
 
+    public async setInboundUsageTracking(
+        inboundUuid: string,
+        trackUserUsage: boolean,
+    ): Promise<TResult<ConfigProfileInboundEntity>> {
+        try {
+            const inbound = await this.configProfileRepository.setInboundUsageTracking(
+                inboundUuid,
+                trackUserUsage,
+            );
+            return ok(inbound);
+        } catch (error) {
+            if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+                return fail(ERRORS.CONFIG_PROFILE_INBOUND_NOT_FOUND_IN_SPECIFIED_PROFILE);
+            }
+            this.logger.error(error);
+            return fail(ERRORS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public async getInboundsByProfileUuid(
         profileUuid: string,
     ): Promise<TResult<GetAllInboundsResponseModel>> {

@@ -6,6 +6,8 @@ import { CommandBus } from '@nestjs/cqrs';
 
 import { TruncateNodesUserUsageHistoryCommand } from '@modules/nodes-user-usage-history/commands/truncate-nodes-user-usage-history';
 import { VacuumNodesUserUsageHistoryCommand } from '@modules/nodes-user-usage-history/commands/vacuum-nodes-user-usage-history';
+import { TruncateConfigProfileInboundsUserUsageHistoryCommand } from '@modules/config-profile-inbounds-user-usage-history/commands/truncate-config-profile-inbounds-user-usage-history';
+import { VacuumConfigProfileInboundsUserUsageHistoryCommand } from '@modules/config-profile-inbounds-user-usage-history/commands/vacuum-config-profile-inbounds-user-usage-history';
 
 import { UsersQueuesService } from '@queue/_users';
 
@@ -47,6 +49,14 @@ export class ServiceQueueProcessor extends WorkerHost {
 
             await this.commandBus.execute(new VacuumNodesUserUsageHistoryCommand());
 
+            await this.commandBus.execute(
+                new TruncateConfigProfileInboundsUserUsageHistoryCommand(),
+            );
+
+            await this.commandBus.execute(
+                new VacuumConfigProfileInboundsUserUsageHistoryCommand(),
+            );
+
             this.logger.log('Tables resetted');
         } catch (error) {
             this.logger.error(
@@ -60,6 +70,10 @@ export class ServiceQueueProcessor extends WorkerHost {
     private async handleVacuumTablesJob() {
         try {
             await this.commandBus.execute(new VacuumNodesUserUsageHistoryCommand());
+
+            await this.commandBus.execute(
+                new VacuumConfigProfileInboundsUserUsageHistoryCommand(),
+            );
 
             this.logger.log('Tables vacuumed successfully.');
         } catch (error) {
