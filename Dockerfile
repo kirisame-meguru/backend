@@ -2,7 +2,10 @@ FROM alpine:3.19 AS frontend
 WORKDIR /opt/frontend
 
 ARG BRANCH=main
-ARG FRONTEND_URL=https://github.com/remnawave/frontend/releases/latest/download/remnawave-frontend.zip
+# [remnawave-fork] serve the per-user-per-inbound frontend from OUR fork's release zip.
+# The frontend fork's fork-frontend.yml workflow builds remnawave-frontend.zip and (re)uploads it to a
+# release tagged `perinbound`. Pinned to that tag (not /latest/) so it resolves even as a prerelease.
+ARG FRONTEND_URL=https://github.com/kirisame-meguru/frontend/releases/download/perinbound/remnawave-frontend.zip
 ARG SINGBOX_SCHEMA_URL=https://github.com/BlackDuty/sing-box-schema/releases/download/v1.13.13/schema.json
 ARG MIHOMO_SCHEMA_URL=https://github.com/dongchengjie/meta-json-schema/releases/download/v1.19.29/meta-json-schema.json
 
@@ -24,6 +27,8 @@ COPY prisma ./prisma
 COPY rspack.config.mjs ./
 COPY prisma.config.ts ./prisma.config.ts
 COPY @types ./@types
+# [remnawave-fork] vendored @remnawave/node-contract tarball (file: dep) must exist before npm ci.
+COPY vendor ./vendor
 
 RUN npm ci --prefer-offline --no-audit --no-fund
 

@@ -21,6 +21,7 @@ export class NodesEntity implements Nodes {
     public lastStatusMessage: null | string;
 
     public isTrafficTrackingActive: boolean;
+    public trackInboundUserUsage: boolean;
     public trafficResetDay: null | number;
     public trafficLimitBytes: bigint | null;
     public trafficUsedBytes: bigint | null;

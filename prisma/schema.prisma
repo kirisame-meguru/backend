@@ -70,6 +70,7 @@ model Users {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   nodesUserUsageHistory          NodesUserUsageHistory[]
+  configProfileInboundsUsage     ConfigProfileInboundsUserUsageHistory[]
   hwidUserDevices                HwidUserDevices[]
   activeInternalSquads           InternalSquadMembers[]
   userSubscriptionRequestHistory UserSubscriptionRequestHistory[]
@@ -184,6 +185,7 @@ model Nodes {
   nodeConsumptionMultiplier BigInt @default(1000000000) @map("node_consumption_multiplier")
 
   isTrafficTrackingActive Boolean @default(false) @map("is_traffic_tracking_active")
+  trackInboundUserUsage   Boolean @default(false) @map("track_inbound_user_usage")
   trafficResetDay         Int?    @default(1) @map("traffic_reset_day")
   trafficLimitBytes       BigInt? @default(0) @map("traffic_limit_bytes")
   trafficUsedBytes        BigInt? @default(0) @map("traffic_used_bytes")
@@ -246,6 +248,23 @@ model NodesUserUsageHistory {
   @@id([nodeId, createdAt, userId])
   @@index([userId, createdAt])
   @@map("nodes_user_usage_history")
+}
+
+model ConfigProfileInboundsUserUsageHistory {
+  inboundUuid String @map("inbound_uuid") @db.Uuid
+  userId      BigInt @map("user_id")
+
+  totalBytes BigInt @map("total_bytes")
+
+  createdAt DateTime @default(dbgenerated("CURRENT_DATE")) @map("created_at") @db.Date
+  updatedAt DateTime @default(dbgenerated("now()")) @updatedAt @map("updated_at")
+
+  inbound ConfigProfileInbounds @relation(fields: [inboundUuid], references: [uuid], onDelete: Cascade)
+  user    Users                 @relation(fields: [userId], references: [tId], onDelete: Cascade)
+
+  @@id([inboundUuid, createdAt, userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("config_profile_inbounds_user_usage_history")
 }
 
 model NodesUsageHistory {
@@ -442,11 +461,14 @@ model ConfigProfileInbounds {
 
   rawInbound Json? @map("raw_inbound")
 
+  trackUserUsage Boolean @default(false) @map("track_user_usage")
+
   profile ConfigProfiles @relation(fields: [profileUuid], references: [uuid], onDelete: Cascade)
 
   hosts                        Hosts[]
   configProfileInboundsToNodes ConfigProfileInboundsToNodes[]
   internalSquadInbounds        InternalSquadInbounds[]
+  userUsageHistory             ConfigProfileInboundsUserUsageHistory[]
 
   @@unique([tag])
   @@index([profileUuid, uuid])

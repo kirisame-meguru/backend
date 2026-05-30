@@ -6,6 +6,7 @@ import { isRestApi, isScheduler } from '@common/utils/startup-app';
 import { AdminModule } from './admin/admin.module';
 import { ApiTokensModule } from './api-tokens/api-tokens.module';
 import { AuthModule } from './auth/auth.module';
+import { ConfigProfileInboundsUserUsageHistoryModule } from './config-profile-inbounds-user-usage-history/config-profile-inbounds-user-usage-history.module';
 import { ConfigProfileModule } from './config-profiles/config-profile.module';
 import { ConnectionsModule } from './connections/connections.module';
 import { ExternalSquadModule } from './external-squads/external-squads.module';
@@ -50,6 +51,7 @@ import { UsersModule } from './users/users.module';
         NodeIntegrationModule,
         HostsModule,
         NodesUserUsageHistoryModule,
+        ConfigProfileInboundsUserUsageHistoryModule,
         HwidUserDevicesModule,
         NodesUsageHistoryModule,
         InfraBillingModule,
