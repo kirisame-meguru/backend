@@ -310,6 +310,12 @@ export class ConfigProfileService {
                 inboundUuid,
                 trackUserUsage,
             );
+
+            await this.nodesQueuesService.startAllNodesByProfile({
+                profileUuid: inbound.profileUuid,
+                emitter: 'setInboundUsageTracking',
+            });
+
             return ok(inbound);
         } catch (error) {
             if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
