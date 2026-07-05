@@ -7,7 +7,7 @@ name: fork-build (backend)
 
 on:
   push:
-    branches: [per-user-per-inbound-traffic-stats]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
