@@ -11,6 +11,7 @@ export namespace GetStatsUserPerInboundUsageCommand {
         BANDWIDTH_STATS_ROUTES.USERS.GET_INBOUNDS_BY_UUID(':uuid'),
         'get',
         'Get User Usage by Range, grouped by inbound',
+        { scope: 'user-inbounds-usage', kind: 'read' },
     );
 
     export const RequestSchema = z.object({

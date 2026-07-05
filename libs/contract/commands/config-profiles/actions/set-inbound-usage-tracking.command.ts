@@ -12,6 +12,7 @@ export namespace SetInboundUsageTrackingCommand {
         CONFIG_PROFILES_ROUTES.ACTIONS.SET_INBOUND_USAGE_TRACKING,
         'post',
         'Enable/disable per-user usage tracking for a config profile inbound',
+        { scope: 'set-inbound-usage-tracking', kind: 'write' },
     );
 
     export const RequestSchema = z.object({
