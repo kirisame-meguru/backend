@@ -305,15 +305,15 @@ export class AxiosService {
 
     public async getUsersInboundsStats(
         data: GetUsersInboundsStatsCommand.Request,
-        url: string,
-        port: null | number,
+        opts: INodeConnectionOpts,
     ): Promise<TResult<GetUsersInboundsStatsCommand.Response>> {
-        const nodeUrl = this.getNodeUrl(url, GetUsersInboundsStatsCommand.url, port);
+        const { url, httpsAgent } = this.resolveAgentAndUrl(GetUsersInboundsStatsCommand.url, opts);
 
         try {
             const response =
-                await this.axiosInstance.post<GetUsersInboundsStatsCommand.Response>(nodeUrl, data, {
+                await this.axiosInstance.post<GetUsersInboundsStatsCommand.Response>(url, data, {
                     timeout: 15_000,
+                    httpsAgent,
                 });
 
             return ok(response.data);
