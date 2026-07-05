@@ -1,7 +1,7 @@
 # Fork allocation ledger — backend
 
-This fork (`kirisame-meguru/backend`) carries the **per-user-per-inbound traffic stats** feature on
-branch `per-user-per-inbound-traffic-stats`. See `../FORK-RESILIENCE.md` for the sync playbook.
+This fork (`kirisame-meguru/backend`) carries the **per-user-per-inbound traffic stats** feature directly
+on **`main`** (`main` is the feature branch). See `../FORK-RESILIENCE.md` for the sync playbook.
 
 ## Allocation table
 
