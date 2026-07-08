@@ -16,6 +16,11 @@ export interface MihomoData {
     rules: string[];
 }
 
+interface ProxyEntry {
+    remark: string;
+    tags: string[];
+}
+
 interface NetworkConfig {
     'early-data-header-name'?: string;
     'grpc-service-name'?: string;
@@ -148,7 +153,7 @@ export class MihomoGeneratorService {
                 false;
 
             const data: MihomoData = { proxies: [], rules: [] };
-            const proxyRemarks: string[] = [];
+            const proxyEntries: ProxyEntry[] = [];
 
             for (const host of hosts) {
                 if (!includeHidden && host.metadata.isHidden) continue;
@@ -162,10 +167,10 @@ export class MihomoGeneratorService {
                 if (!node) continue;
 
                 data.proxies.push(node);
-                proxyRemarks.push(host.finalRemark);
+                proxyEntries.push({ remark: host.finalRemark, tags: host.metadata.tags ?? [] });
             }
 
-            return await this.renderConfig(data, proxyRemarks, yamlConfig);
+            return await this.renderConfig(data, proxyEntries, yamlConfig);
         } catch (error) {
             this.logger.error('Error generating clash config:', error);
             return '';
@@ -563,7 +568,7 @@ export class MihomoGeneratorService {
 
     private async renderConfig(
         data: MihomoData,
-        proxyRemarks: string[],
+        proxyEntries: ProxyEntry[],
         yamlConfig: Record<string, unknown>,
     ): Promise<string> {
         try {
@@ -586,7 +591,7 @@ export class MihomoGeneratorService {
                     const { remnawave: _remnawave, ...restGroup } = group;
                     const cleanGroup = remnawaveCustom ? restGroup : group;
 
-                    const remarks = this.resolveGroupRemarks(remnawaveCustom, proxyRemarks);
+                    const remarks = this.resolveGroupRemarks(remnawaveCustom, proxyEntries);
 
                     return {
                         ...cleanGroup,
@@ -614,11 +619,19 @@ export class MihomoGeneratorService {
 
     private resolveGroupRemarks(
         remnawaveCustom: Record<string, unknown> | undefined,
-        proxyRemarks: string[],
+        proxyEntries: ProxyEntry[],
     ): string[] {
         if (!remnawaveCustom) {
-            return [...proxyRemarks];
+            return proxyEntries.map((e) => e.remark);
         }
+
+        let pool = proxyEntries;
+        const proxyTags = remnawaveCustom['proxy-tags'];
+        if (Array.isArray(proxyTags) && proxyTags.length > 0) {
+            pool = proxyEntries.filter((e) => e.tags.some((t) => proxyTags.includes(t)));
+        }
+
+        const proxyRemarks = pool.map((e) => e.remark);
 
         if (remnawaveCustom['include-proxies'] === false) {
             return [];
@@ -633,7 +646,7 @@ export class MihomoGeneratorService {
             return _.shuffle(proxyRemarks);
         }
 
-        return [...proxyRemarks];
+        return proxyRemarks;
     }
 
     private buildProxyProviders(
