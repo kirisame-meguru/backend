@@ -14,6 +14,5 @@ export const CONFIG_PROFILES_ROUTES = {
 
     ACTIONS: {
         REORDER: `${ACTIONS_ROUTE}/reorder`,
-        SET_INBOUND_USAGE_TRACKING: `${ACTIONS_ROUTE}/set-inbound-usage-tracking`,
     },
 } as const;

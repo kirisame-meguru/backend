@@ -18,7 +18,6 @@ export const NodesSchema = z.object({
     lastStatusChange: z.nullable(z.iso.datetime().transform((str) => new Date(str))),
     lastStatusMessage: z.nullable(z.string()),
     isTrafficTrackingActive: z.boolean(),
-    trackInboundUserUsage: z.boolean(),
     trafficResetDay: z.nullable(z.int()),
     trafficLimitBytes: z.nullable(z.number()),
     trafficUsedBytes: z.nullable(z.number()),

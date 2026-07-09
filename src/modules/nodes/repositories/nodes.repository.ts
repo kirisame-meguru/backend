@@ -82,7 +82,6 @@ export class NodesRepository implements ICrud<NodesEntity> {
                 'address',
                 'port',
                 'proxyUrl',
-                'trackInboundUserUsage',
             ])
             .where('isConnected', '=', true)
             .where('isDisabled', '=', false)
@@ -100,7 +99,6 @@ export class NodesRepository implements ICrud<NodesEntity> {
                 port: value.port,
                 proxyUrl: value.proxyUrl,
             },
-            trackInboundUserUsage: value.trackInboundUserUsage,
         }));
     }
 

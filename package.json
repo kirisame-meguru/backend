@@ -61,7 +61,7 @@
     "@peculiar/x509": "2.0.0",
     "@prisma/client": "6.19.3",
     "@remnawave/hashed-set": "^0.0.4",
-    "@remnawave/node-contract": "file:vendor/remnawave-node-contract-2.8.0.tgz",
+    "@remnawave/node-contract": "file:vendor/remnawave-node-contract-3.3.0.tgz",
     "@scalar/nestjs-api-reference": "^1.2.14",
     "@simplewebauthn/server": "^13.3.2",
     "@songkeys/nestjs-redis": "^11.0.0",

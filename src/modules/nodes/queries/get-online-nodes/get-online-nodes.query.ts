@@ -9,7 +9,6 @@ export interface IGetOnlineNodesPartialResponse {
     nodeConsumptionMultiplier: bigint;
     id: bigint;
     connectionOpts: INodeConnectionOpts;
-    trackInboundUserUsage: boolean;
 }
 
 export class GetOnlineNodesQuery extends Query<TResult<IGetOnlineNodesPartialResponse[]>> {

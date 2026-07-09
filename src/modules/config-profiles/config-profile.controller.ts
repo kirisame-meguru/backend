@@ -19,7 +19,6 @@ import {
     GetConfigProfilesCommand,
     GetInboundsByProfileUuidCommand,
     ReorderConfigProfileCommand,
-    SetInboundUsageTrackingCommand,
     UpdateConfigProfileCommand,
 } from '@libs/contracts/commands';
 import { ROLE } from '@libs/contracts/constants';
@@ -39,8 +38,6 @@ import {
     GetInboundsByProfileUuidResponseDto,
     ReorderConfigProfilesBodyDto,
     ReorderConfigProfilesResponseDto,
-    SetInboundUsageTrackingRequestDto,
-    SetInboundUsageTrackingResponseDto,
     UpdateConfigProfileBodyDto,
     UpdateConfigProfileResponseDto,
 } from './dtos';
@@ -202,26 +199,4 @@ export class ConfigProfileController {
         };
     }
 
-    @ApiOkResponse({
-        type: SetInboundUsageTrackingResponseDto,
-        description: 'Inbound usage tracking updated successfully',
-    })
-    @Endpoint({
-        command: SetInboundUsageTrackingCommand,
-        httpCode: HttpStatus.OK,
-        apiBody: SetInboundUsageTrackingRequestDto,
-    })
-    async setInboundUsageTracking(
-        @Body() body: SetInboundUsageTrackingRequestDto,
-    ): Promise<SetInboundUsageTrackingResponseDto> {
-        const result = await this.configProfileService.setInboundUsageTracking(
-            body.inboundUuid,
-            body.trackUserUsage,
-        );
-
-        const data = errorHandler(result);
-        return {
-            response: data,
-        };
-    }
 }

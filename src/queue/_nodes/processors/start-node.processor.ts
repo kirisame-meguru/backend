@@ -220,12 +220,6 @@ export class StartNodeProcessor extends WorkerHost {
 
             const reqStartTime = getTime();
 
-            const trackedInboundTags = node.trackInboundUserUsage
-                ? node.activeInbounds
-                      .filter((inbound) => inbound.trackUserUsage)
-                      .map((inbound) => inbound.tag)
-                : [];
-
             const startNodeResult = await this.axios.startXray(
                 {
                     xrayConfig: config.response.config as unknown as Record<string, unknown>,
@@ -240,7 +234,6 @@ export class StartNodeProcessor extends WorkerHost {
                             tags: node.tags,
                         },
                         integrations: nodeIntegrations,
-                        trackedInboundTags,
                     },
                 },
                 {

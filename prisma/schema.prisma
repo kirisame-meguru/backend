@@ -185,7 +185,6 @@ model Nodes {
   nodeConsumptionMultiplier BigInt @default(1000000000) @map("node_consumption_multiplier")
 
   isTrafficTrackingActive Boolean @default(false) @map("is_traffic_tracking_active")
-  trackInboundUserUsage   Boolean @default(false) @map("track_inbound_user_usage")
   trafficResetDay         Int?    @default(1) @map("traffic_reset_day")
   trafficLimitBytes       BigInt? @default(0) @map("traffic_limit_bytes")
   trafficUsedBytes        BigInt? @default(0) @map("traffic_used_bytes")
@@ -460,8 +459,6 @@ model ConfigProfileInbounds {
   port     Int?    @map("port")
 
   rawInbound Json? @map("raw_inbound")
-
-  trackUserUsage Boolean @default(false) @map("track_user_usage")
 
   profile ConfigProfiles @relation(fields: [profileUuid], references: [uuid], onDelete: Cascade)
 

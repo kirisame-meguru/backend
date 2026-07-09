@@ -210,18 +210,6 @@ export class ConfigProfileRepository {
         return new ConfigProfileInboundEntity(result);
     }
 
-    public async setInboundUsageTracking(
-        inboundUuid: string,
-        trackUserUsage: boolean,
-    ): Promise<ConfigProfileInboundEntity> {
-        const result = await this.prisma.tx.configProfileInbounds.update({
-            where: { uuid: inboundUuid },
-            data: { trackUserUsage },
-        });
-
-        return new ConfigProfileInboundEntity(result);
-    }
-
     public async getInboundsByProfileUuid(
         profileUuid: string,
     ): Promise<ConfigProfileInboundEntity[]> {

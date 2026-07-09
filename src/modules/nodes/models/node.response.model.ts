@@ -23,7 +23,6 @@ export class NodeResponseModel {
     public consumptionMultiplier: number;
     public nodeConsumptionMultiplier: number;
     public isTrafficTrackingActive: boolean;
-    public trackInboundUserUsage: boolean;
     public trafficLimitBytes: null | number;
     public trafficUsedBytes: null | number;
     public notifyPercent: null | number;
@@ -62,7 +61,6 @@ export class NodeResponseModel {
         this.lastStatusChange = data.lastStatusChange;
         this.lastStatusMessage = data.lastStatusMessage;
         this.isTrafficTrackingActive = data.isTrafficTrackingActive;
-        this.trackInboundUserUsage = data.trackInboundUserUsage;
         this.trafficResetDay = data.trafficResetDay;
         this.trafficLimitBytes = Number(data.trafficLimitBytes);
         this.trafficUsedBytes = Number(data.trafficUsedBytes);

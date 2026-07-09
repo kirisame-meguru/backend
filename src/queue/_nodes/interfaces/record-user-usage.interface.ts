@@ -5,5 +5,4 @@ export interface IRecordUserUsagePayload {
     nodeUuid: string;
     consumptionMultiplier: string;
     connectionOpts: INodeConnectionOpts;
-    trackInboundUserUsage: boolean;
 }

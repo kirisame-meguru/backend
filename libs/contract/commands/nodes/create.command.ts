@@ -27,7 +27,6 @@ export namespace CreateNodeCommand {
             )
             .nullish(),
         isTrafficTrackingActive: z.boolean().optional().default(false),
-        trackInboundUserUsage: z.boolean().optional().default(false),
         trafficLimitBytes: z.number().min(0).optional(),
         notifyPercent: z.int().min(0).max(100).optional(),
         trafficResetDay: z.int().min(1).max(31).optional(),
