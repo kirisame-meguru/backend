@@ -52,14 +52,13 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
 
     async process(job: Job<IRecordUserUsagePayload>) {
         try {
-            const { nodeUuid, connectionOpts, consumptionMultiplier, nodeId, trackInboundUserUsage } =
-                job.data;
+            const { nodeUuid, connectionOpts, consumptionMultiplier, nodeId } = job.data;
 
-            // Opt-in per-user-per-inbound usage. Fully isolated (own try/catch) so it
-            // can never affect the billing-critical per-user usage handling below.
-            if (trackInboundUserUsage) {
-                await this.recordInboundUserUsage(nodeUuid, connectionOpts);
-            }
+            // Per-user-per-inbound usage. Whether anything is actually collected is
+            // decided by the xray config itself ($.inbounds[].trackTrafficPerUser); the
+            // node returns an empty result when no inbound opted in. Fully isolated (own
+            // try/catch) so it can never affect the billing-critical usage handling below.
+            await this.recordInboundUserUsage(nodeUuid, connectionOpts);
 
             const queryResult = await this.axios.getUsersStats(
                 {

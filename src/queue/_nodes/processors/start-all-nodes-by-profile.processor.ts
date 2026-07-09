@@ -302,16 +302,6 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                     (inbound) => activeNodeInboundsTags.has(inbound.tag),
                 );
 
-                const trackedInboundTags = node.trackInboundUserUsage
-                    ? node.activeInbounds
-                          .filter(
-                              (inbound) =>
-                                  inbound.trackUserUsage &&
-                                  activeNodeInboundsTags.has(inbound.tag),
-                          )
-                          .map((inbound) => inbound.tag)
-                    : [];
-
                 const startXrayResponse = await this.axios.startXray(
                     {
                         xrayConfig: {
@@ -336,7 +326,6 @@ export class StartAllNodesByProfileQueueProcessor extends WorkerHost {
                                 tags: node.tags,
                             },
                             integrations: nodeIntegrations,
-                            trackedInboundTags,
                         },
                     },
                     {

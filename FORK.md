@@ -7,16 +7,29 @@ on **`main`** (`main` is the feature branch). See `../FORK-RESILIENCE.md` for th
 
 | Namespace | Symbol | File | Fork value | Upstream-conventional (PR-time) |
 |-----------|--------|------|-----------|----------------------------------|
-| prisma migration timestamp | `_per_user_per_inbound_usage` | `prisma/migrations/<ts>_per_user_per_inbound_usage/` | **restamped to newest** (see rule) | regenerate at PR |
-| own package version | `@remnawave/backend-contract` | `libs/contract/package.json` | 2.8.35 (= upstream; kept so frontend's `file:` filename matches) | revert for PR |
-| dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-2.8.0.tgz` | keep; remap to upstream-published |
-| endpoint RBAC scope | `user-inbounds-usage` / `set-inbound-usage-tracking` | contract `getEndpointDetails` 4th arg | descriptive new scopes | keep |
+| prisma migration timestamp | `_per_user_per_inbound_usage`, `_drop_per_inbound_tracking_flags` | `prisma/migrations/<ts>_*/` | **restamped to newest** (see rule) | regenerate at PR |
+| own package version | `@remnawave/backend-contract` | `libs/contract/package.json` | 2.8.36 (fork bump; frontend's `file:` filename must match) | revert for PR |
+| dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-2.9.0.tgz` | keep; remap to upstream-published |
+| endpoint RBAC scope | `user-inbounds-usage` | contract `getEndpointDetails` 4th arg | descriptive new scope | keep |
 
 No new **error codes** were added in backend (its `A2##` namespace is untouched). All other additions —
-table `config_profile_inbounds_user_usage_history`, columns `track_user_usage` / `track_inbound_user_usage`,
-indexes, FKs, REST routes, ts-rest commands, CQRS handlers, the new module — are **descriptive unique
-names**: a collision would be a *visible* git textual conflict, so no reserved band is needed. (After any
-rebase that auto-merges `schema.prisma` or `errors.ts`, still eyeball for an accidental duplicate.)
+table `config_profile_inbounds_user_usage_history`, indexes, FKs, REST routes, ts-rest commands, CQRS
+handlers, the new module — are **descriptive unique names**: a collision would be a *visible* git textual
+conflict, so no reserved band is needed. (After any rebase that auto-merges `schema.prisma` or
+`errors.ts`, still eyeball for an accidental duplicate.)
+
+## The panel does not control tracking (as of the `trackTrafficPerUser` rework)
+
+Tracking is switched on *inside the xray config*: `$.inbounds[].trackTrafficPerUser: true`. The backend
+only stores and forwards that config — `XRayConfig` (`src/common/helpers/xray-config/`) parses the JSON
+into a plain object and never strips unknown inbound keys, and `sortXrayConfig` (`xray-typed`) only
+reorders top-level keys. So the flag reaches the node, and the node reaches xray-core, untouched.
+
+Removed in the rework: columns `nodes.track_inbound_user_usage` and
+`config_profile_inbounds.track_user_usage` (migration `_drop_per_inbound_tracking_flags`), the
+`set-inbound-usage-tracking` endpoint/command/scope, and `internals.trackedInboundTags` on `StartXray`
+(hence node-contract 2.9.0). `recordInboundUserUsage()` now runs for **every** online node — the node
+returns an empty result when no inbound opted in, so it is safe and self-gating.
 
 ## 2.8.0 sync notes (what changed vs the 2.7.4-era doc)
 
@@ -27,9 +40,9 @@ rebase that auto-merges `schema.prisma` or `errors.ts`, still eyeball for an acc
   `connectionOpts: INodeConnectionOpts` (adds `proxyUrl`) across the node payload, online-nodes
   query/repository, and `AxiosService`. The feature's `getUsersInboundsStats` +
   `recordInboundUserUsage` were adapted to the new convention (see `fix: adapt per-inbound…` commit).
-- **getEndpointDetails** now requires a `scopeOptions` 4th arg — added to the two fork commands.
+- **getEndpointDetails** now requires a `scopeOptions` 4th arg — added to the fork command.
 - `@remnawave/node-contract` is now vendored as a `file:` tarball
-  (`vendor/remnawave-node-contract-2.8.0.tgz`, rebuilt from the node fork's `libs/contract`).
+  (`vendor/remnawave-node-contract-2.9.0.tgz`, rebuilt from the node fork's `libs/contract`).
 
 ## Migration timestamp — standing rule (MEDIUM risk)
 
@@ -50,8 +63,9 @@ originally a fixed midnight value `20260530000000`; it has been restamped to a r
 
 ## For PR / version handling
 
-- `libs/contract/package.json` version is kept at upstream's (2.8.35) — no fork bump — so the built
-  `backend-contract` tarball filename keeps matching the frontend's `file:` spec.
+- `libs/contract/package.json` is bumped to 2.8.36 because the contract shape changed; the frontend's
+  `file:vendor/remnawave-backend-contract-2.8.36.tgz` spec must be bumped in lockstep or npm serves a
+  stale cached tarball.
 - **Keep** the `@remnawave/node-contract` dependency-spec bump (feature needs the new node endpoint),
   remapping to the upstream-published version.
 - Lockfiles are isolated in a separate `chore:` commit; on rebase conflict take upstream then `npm install`.

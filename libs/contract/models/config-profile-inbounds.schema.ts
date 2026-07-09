@@ -10,6 +10,4 @@ export const ConfigProfileInboundsSchema = z.object({
     port: z.nullable(z.number()),
 
     rawInbound: z.nullable(z.unknown()),
-
-    trackUserUsage: z.boolean().default(false),
 });
