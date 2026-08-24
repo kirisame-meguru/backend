@@ -208,7 +208,7 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
                 return;
             }
 
-            const rows = response.response.response.usersInbounds;
+            const rows = response.response.usersInbounds;
             if (rows.length === 0) {
                 return;
             }
@@ -216,9 +216,9 @@ export class RecordUserUsageQueueProcessor extends WorkerHost {
             const entries: IInboundUserUsageEntry[] = [];
 
             rows.forEach((row) => {
-                const { ok } = t(() => BigInt(row.username));
-
-                if (!ok) {
+                try {
+                    BigInt(row.username);
+                } catch {
                     return;
                 }
 

@@ -259,7 +259,7 @@ model ConfigProfileInboundsUserUsageHistory {
   updatedAt DateTime @default(dbgenerated("now()")) @updatedAt @map("updated_at")
 
   inbound ConfigProfileInbounds @relation(fields: [inboundUuid], references: [uuid], onDelete: Cascade)
-  user    Users                 @relation(fields: [userId], references: [tId], onDelete: Cascade)
+  user    Users                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([inboundUuid, createdAt, userId])
   @@index([userId, createdAt(sort: Desc)])

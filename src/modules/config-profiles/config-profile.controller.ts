@@ -198,5 +198,4 @@ export class ConfigProfileController {
             response: data,
         };
     }
-
 }

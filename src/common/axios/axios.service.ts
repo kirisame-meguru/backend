@@ -25,9 +25,9 @@ import {
     GetNodeHealthCheckCommand,
     GetSystemStatsCommand,
     GetUserIpListCommand,
+    GetUsersInboundsStatsCommand,
     GetUsersIpListCommand,
     GetUsersStatsCommand,
-    GetUsersInboundsStatsCommand,
     RecreateTablesCommand,
     RemoveUserCommand,
     RemoveUsersCommand,
@@ -306,34 +306,14 @@ export class AxiosService {
     public async getUsersInboundsStats(
         data: GetUsersInboundsStatsCommand.Request,
         opts: INodeConnectionOpts,
-    ): Promise<TResult<GetUsersInboundsStatsCommand.Response>> {
-        const { url, httpsAgent } = this.resolveAgentAndUrl(GetUsersInboundsStatsCommand.url, opts);
-
-        try {
-            const response =
-                await this.axiosInstance.post<GetUsersInboundsStatsCommand.Response>(url, data, {
-                    timeout: 15_000,
-                    httpsAgent,
-                });
-
-            return ok(response.data);
-        } catch (error) {
-            if (error instanceof AxiosError) {
-                this.logger.error(
-                    `Error in Axios getUsersInboundsStats: ${error.message}, JSON: ${JSON.stringify(error.response?.data)}`,
-                );
-
-                return fail(ERRORS.NODE_ERROR_WITH_MSG.withMessage(JSON.stringify(error.message)));
-            } else {
-                this.logger.error('Error in getUsersInboundsStats:', error);
-
-                return fail(
-                    ERRORS.NODE_ERROR_WITH_MSG.withMessage(
-                        JSON.stringify(error) ?? 'Unknown error',
-                    ),
-                );
-            }
-        }
+    ): Promise<TResult<GetUsersInboundsStatsCommand.Response['response']>> {
+        return this.request<GetUsersInboundsStatsCommand.Response>({
+            label: 'GET USERS INBOUNDS STATS',
+            path: GetUsersInboundsStatsCommand.url,
+            opts,
+            data,
+            timeout: 15_000,
+        });
     }
 
     public async getIpsList(

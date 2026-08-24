@@ -22,4 +22,4 @@ CREATE INDEX "config_profile_inbounds_user_usage_history_user_id_created__idx" O
 ALTER TABLE "config_profile_inbounds_user_usage_history" ADD CONSTRAINT "config_profile_inbounds_user_usage_history_inbound_uuid_fkey" FOREIGN KEY ("inbound_uuid") REFERENCES "config_profile_inbounds"("uuid") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "config_profile_inbounds_user_usage_history" ADD CONSTRAINT "config_profile_inbounds_user_usage_history_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("t_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "config_profile_inbounds_user_usage_history" ADD CONSTRAINT "config_profile_inbounds_user_usage_history_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

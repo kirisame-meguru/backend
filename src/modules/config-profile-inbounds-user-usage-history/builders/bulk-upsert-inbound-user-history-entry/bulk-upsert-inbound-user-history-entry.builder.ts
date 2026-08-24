@@ -43,7 +43,7 @@ export class BulkUpsertInboundUserHistoryEntryBuilder {
                 VALUES ${values}
             ) AS v(tag, user_id, total_bytes, created_at, updated_at)
             INNER JOIN config_profile_inbounds cpi ON cpi.tag = v.tag
-            WHERE EXISTS (SELECT 1 FROM users WHERE t_id = v.user_id)
+            WHERE EXISTS (SELECT 1 FROM users WHERE id = v.user_id)
             ON CONFLICT ON CONSTRAINT config_profile_inbounds_user_usage_history_pkey
             DO UPDATE SET
                 total_bytes = config_profile_inbounds_user_usage_history.total_bytes + EXCLUDED.total_bytes,

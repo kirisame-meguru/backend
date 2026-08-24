@@ -1,71 +1,46 @@
-import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Controller, HttpStatus, Param, Query, UseFilters, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-import { HttpExceptionFilter } from '@common/exception/http-exception.filter';
-import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
-import { errorHandler } from '@common/helpers/error-handler.helper';
 import { Endpoint } from '@common/decorators/base-endpoint';
 import { Roles } from '@common/decorators/roles/roles';
+import { ApiScopeResource } from '@common/decorators/scopes';
+import { HttpExceptionFilter } from '@common/exception/http-exception.filter';
+import { JwtDefaultGuard } from '@common/guards/jwt-guards/def-jwt-guard';
 import { RolesGuard } from '@common/guards/roles';
-import { GetStatsUserPerInboundUsageCommand } from '@libs/contracts/commands';
+import { ScopesGuard } from '@common/guards/scopes';
+import { errorHandler } from '@common/helpers/error-handler.helper';
 import { BANDWIDTH_STATS_USERS_CONTROLLER, CONTROLLERS_INFO } from '@libs/contracts/api';
+import { GetStatsUserPerInboundUsageCommand } from '@libs/contracts/commands';
 import { ROLE } from '@libs/contracts/constants';
 
+import { ConfigProfileInboundsUserUsageHistoryService } from './config-profile-inbounds-user-usage-history.service';
 import {
-    GetStatsUserPerInboundUsageRequestDto,
-    GetStatsUserPerInboundUsageRequestQueryDto,
+    GetStatsUserPerInboundUsageParamDto,
+    GetStatsUserPerInboundUsageQueryDto,
     GetStatsUserPerInboundUsageResponseDto,
 } from './dtos';
-import { ConfigProfileInboundsUserUsageHistoryService } from './config-profile-inbounds-user-usage-history.service';
 
 @ApiBearerAuth('Authorization')
+@ApiScopeResource(CONTROLLERS_INFO.BANDWIDTH_STATS.resource)
 @ApiTags(CONTROLLERS_INFO.BANDWIDTH_STATS.tag)
 @Roles(ROLE.ADMIN, ROLE.API)
-@UseGuards(JwtDefaultGuard, RolesGuard)
+@UseGuards(JwtDefaultGuard, RolesGuard, ScopesGuard)
 @UseFilters(HttpExceptionFilter)
 @Controller(BANDWIDTH_STATS_USERS_CONTROLLER)
 export class BandwidthStatsUserInboundsController {
-    constructor(
-        private readonly service: ConfigProfileInboundsUserUsageHistoryService,
-    ) {}
+    constructor(private readonly service: ConfigProfileInboundsUserUsageHistoryService) {}
 
-    @ApiOkResponse({
-        type: GetStatsUserPerInboundUsageResponseDto,
-        description: 'Stats user per-inbound usage fetched successfully',
-    })
-    @ApiParam({ name: 'uuid', type: String, description: 'UUID of the user', required: true })
-    @ApiQuery({
-        name: 'end',
-        type: String,
-        description: 'End date (YYYY-MM-DD)',
-        required: true,
-        example: '2026-01-31',
-        format: 'date',
-    })
-    @ApiQuery({
-        name: 'start',
-        type: String,
-        description: 'Start date (YYYY-MM-DD)',
-        required: true,
-        example: '2026-01-01',
-        format: 'date',
-    })
-    @ApiQuery({
-        name: 'topInboundsLimit',
-        type: Number,
-        description: 'Limit of top inbounds to return',
-        required: true,
-    })
     @Endpoint({
         command: GetStatsUserPerInboundUsageCommand,
         httpCode: HttpStatus.OK,
+        type: GetStatsUserPerInboundUsageResponseDto,
     })
     async getStatsUserPerInboundUsage(
-        @Query() query: GetStatsUserPerInboundUsageRequestQueryDto,
-        @Param() paramData: GetStatsUserPerInboundUsageRequestDto,
+        @Query() query: GetStatsUserPerInboundUsageQueryDto,
+        @Param() param: GetStatsUserPerInboundUsageParamDto,
     ): Promise<GetStatsUserPerInboundUsageResponseDto> {
         const result = await this.service.getStatsUserPerInboundUsage(
-            paramData.uuid,
+            param.userId,
             query.start,
             query.end,
             query.topInboundsLimit,
