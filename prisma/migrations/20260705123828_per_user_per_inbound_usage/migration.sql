@@ -22,4 +22,7 @@ CREATE INDEX "config_profile_inbounds_user_usage_history_user_id_created__idx" O
 ALTER TABLE "config_profile_inbounds_user_usage_history" ADD CONSTRAINT "config_profile_inbounds_user_usage_history_inbound_uuid_fkey" FOREIGN KEY ("inbound_uuid") REFERENCES "config_profile_inbounds"("uuid") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "config_profile_inbounds_user_usage_history" ADD CONSTRAINT "config_profile_inbounds_user_usage_history_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- NOTE: users' PK is still "t_id" at this point in history; upstream renames it to "id" later, in
+-- 20260720124815_rename_column. Postgres carries dependent FKs through a column rename, so this
+-- constraint ends up targeting users("id") — which is what schema.prisma declares.
+ALTER TABLE "config_profile_inbounds_user_usage_history" ADD CONSTRAINT "config_profile_inbounds_user_usage_history_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("t_id") ON DELETE CASCADE ON UPDATE CASCADE;
