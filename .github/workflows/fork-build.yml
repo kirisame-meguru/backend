@@ -1,7 +1,8 @@
 # [remnawave-fork] Self-contained panel image build for the per-user-per-inbound fork.
 # Builds the backend (panel) image and pushes to GHCR using the built-in GITHUB_TOKEN.
 # The Dockerfile's frontend stage pulls the fork's remnawave-frontend.zip from the
-# `perinbound` release on the frontend fork — run fork-frontend.yml there FIRST.
+# `perinbound` release on the frontend fork, so that zip must already be rebuilt from the
+# frontend fork's current main — the "Wait for fork-frontend" step below enforces it.
 # See ../../FORK-RESILIENCE.md.
 name: fork-build (backend)
 
@@ -19,6 +20,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # [remnawave-fork] The Dockerfile bakes in the frontend zip from the frontend fork's
+      # `perinbound` release. Both forks build on push to main, and this one finishes first, so
+      # without this gate a cross-repo change ships a panel image whose bundled frontend still
+      # speaks the previous @remnawave/backend-contract — every response fails zod validation.
+      # Block until no fork-frontend run is queued or running on the frontend fork's main.
+      # NOTE: the frontend fork's workflow FILE is `fork-build.yml` while its `name:` is
+      # `fork-frontend`. `--workflow fork-frontend.yml` 404s, and under `set -e` that fails this
+      # step rather than skipping it — pass the filename.
+      - name: Wait for fork-frontend to publish the zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FRONTEND_REPO: ${{ github.repository_owner }}/frontend
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 60); do
+            pending=$(gh run list -R "$FRONTEND_REPO" --workflow fork-build.yml --branch main \
+              --json status --jq '[.[] | select(.status != "completed")] | length')
+            if [ "$pending" -eq 0 ]; then
+              echo "fork-frontend idle; the perinbound zip is current."
+              exit 0
+            fi
+            echo "fork-frontend has $pending run(s) in flight; waiting (attempt $i/60)..."
+            sleep 15
+          done
+          echo "::error::fork-frontend still running after 15m; refusing to bake a stale frontend."
+          exit 1
+
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
