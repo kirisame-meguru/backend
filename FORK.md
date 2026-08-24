@@ -7,7 +7,7 @@ on **`main`** (`main` is the feature branch). See `../FORK-RESILIENCE.md` for th
 
 | Namespace | Symbol | File | Fork value | Upstream-conventional (PR-time) |
 |-----------|--------|------|-----------|----------------------------------|
-| prisma migration timestamp | `_per_user_per_inbound_usage`, `_drop_per_inbound_tracking_flags` | `prisma/migrations/<ts>_*/` | **restamped to newest** (see rule) | regenerate at PR |
+| prisma migration timestamp | `_per_user_per_inbound_usage`, `_drop_per_inbound_tracking_flags` | `prisma/migrations/<ts>_*/` | **pinned — never restamp** (see rule) | regenerate at PR |
 | own package version | `@remnawave/backend-contract` | `libs/contract/package.json` | 3.4.3 (fork bump over upstream 3.4.2; frontend's `file:` filename must match) | revert for PR |
 | dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-3.3.0.tgz` | keep; remap to upstream-published |
 | endpoint RBAC scope | `user-inbounds-usage` | contract `getEndpointDetails` 4th arg | descriptive new scope | keep |
@@ -41,9 +41,9 @@ returns an empty result when no inbound opted in, so it is safe and self-gating.
   (`userId: numberParamSchema`), the service dropped its `GetUserByUniqueFieldQuery` lookup and takes
   `userId: number` directly, and the bulk-upsert builder's guard is now
   `WHERE EXISTS (SELECT 1 FROM users WHERE id = v.user_id)`.
-  `prisma/schema.prisma`: `references: [tId]` -> `references: [id]`; the fork migration's FK is now
-  `REFERENCES "users"("id")` — correct **because the standing restamp rule puts it after upstream's
-  rename migration**. If you ever stop restamping, this FK has to go back to `t_id`.
+  `prisma/schema.prisma`: `references: [tId]` -> `references: [id]`. The fork migration's FK stays
+  `REFERENCES "users"("t_id")` because the migration is pinned *before* upstream's rename; Postgres
+  carries the FK through the rename, so it ends up on `users("id")`. See the pinned-timestamps rule.
 - **`feat(hosts): raise remark max length from 40 to 100` DROPPED.** Upstream implements it natively:
   `libs/contract/commands/hosts/{create,update}.command.ts` ship `.max(100)`, `schema.prisma` has
   `remark String @db.VarChar(100)`, and migration `20260703205426_increase_host_remark_limit` runs the
@@ -82,22 +82,40 @@ returns an empty result when no inbound opted in, so it is safe and self-gating.
 - `@remnawave/node-contract` is now vendored as a `file:` tarball
   (`vendor/remnawave-node-contract-2.9.0.tgz`, rebuilt from the node fork's `libs/contract`).
 
-## Migration timestamp — standing rule (MEDIUM risk)
+## Migration timestamps — PINNED, never restamp again (was a HIGH-risk footgun)
 
-The migration is a **new directory**, so it never textually conflicts. Its only hazard is *ordering*:
-if it was already applied to a database and a later upstream sync brings in an unapplied migration with
-an **earlier** timestamp, Prisma reports a migration "found in the middle" / drift.
+**The old "restamp to newest before every deploy" rule is retired. Do not restamp these.**
 
-**Rule:** before every deploy/integration *after a rebase*, re-stamp this migration so it is the newest:
+Current, permanent names:
 
-```
-NEWTS=$(date -u +%Y%m%d%H%M%S)
-git mv prisma/migrations/<old-ts>_per_user_per_inbound_usage \
-       prisma/migrations/${NEWTS}_per_user_per_inbound_usage
-```
+| Migration | Sits between |
+|-----------|--------------|
+| `20260705123828_per_user_per_inbound_usage` | upstream `20260703205426_increase_host_remark_limit` → `20260706144257_drop_default_on_api_tokens` |
+| `20260710000000_drop_per_inbound_tracking_flags` | upstream `20260706192331_change_hwid_datatype` → `20260710141018_add_nuuh_user_id_created_at_index` |
 
-(The `migration.sql` body never changes — only the directory name, which is the ordering key.) It was
-originally a fixed midnight value `20260530000000`; it has been restamped to a real current timestamp.
+Why restamping was wrong: a migration's directory name is its **identity** in
+`_prisma_migrations`. Renaming one that a database has *already applied* makes Prisma see a brand-new
+migration and run it again — and the first statement is `CREATE TABLE
+config_profile_inbounds_user_usage_history`, which fails because the table is already there. The
+migration is then recorded as failed and `migrate deploy` refuses to do anything else, so the panel
+crash-loops on boot.
+
+This is not hypothetical. It happened on **2026-07-05** on the Tokyo panel: `_prisma_migrations` still
+carries the wreckage — a failed `20260705123828_per_user_per_inbound_usage` row (`finished_at` NULL,
+`rolled_back_at` set) followed by a hand-made `--applied` marker row with `applied_steps_count = 0`,
+plus the original `20260530194027_per_user_per_inbound_usage` from the first deploy. Every restamp buys
+another round of that manual recovery, on every deployed database, forever.
+
+Because these timestamps now sit **before** upstream's `20260720124815_rename_column`, the fork
+migration's user FK must reference `users("t_id")`, the column name in force at that point. Postgres
+carries dependent FKs through `ALTER TABLE ... RENAME COLUMN`, so after upstream's rename the
+constraint targets `users("id")` — which is what `schema.prisma` declares (`references: [id]`).
+Verified end to end: fresh-DB `migrate deploy` + `migrate diff` clean, and a restore of the Tokyo dump
+then `migrate deploy` applies only the 17 pending upstream migrations, skips both fork migrations, and
+leaves `migrate diff --from-url` reporting "No difference detected".
+
+If a future upstream migration ever genuinely has to run *before* these, insert a new fork migration
+with a later timestamp instead of renaming these two.
 
 ## For PR / version handling
 
@@ -107,4 +125,5 @@ originally a fixed midnight value `20260530000000`; it has been restamped to a r
 - **Keep** the `@remnawave/node-contract` dependency-spec bump (feature needs the new node endpoint),
   remapping to the upstream-published version.
 - Lockfiles are isolated in a separate `chore:` commit; on rebase conflict take upstream then `npm install`.
-- Regenerate the migration with a fresh timestamp at PR time.
+- Do **not** regenerate the migration timestamps — see the pinned-timestamps rule. At PR time, squash
+  the two fork migrations into one freshly-stamped migration against upstream's tip instead.
