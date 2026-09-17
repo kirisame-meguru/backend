@@ -8,8 +8,8 @@ on **`main`** (`main` is the feature branch). See `../FORK-RESILIENCE.md` for th
 | Namespace | Symbol | File | Fork value | Upstream-conventional (PR-time) |
 |-----------|--------|------|-----------|----------------------------------|
 | prisma migration timestamp | `_per_user_per_inbound_usage`, `_drop_per_inbound_tracking_flags` | `prisma/migrations/<ts>_*/` | **pinned — never restamp** (see rule) | regenerate at PR |
-| own package version | `@remnawave/backend-contract` | `libs/contract/package.json` | 3.4.3 (fork bump over upstream 3.4.2; frontend's `file:` filename must match) | revert for PR |
-| dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-3.3.0.tgz` | keep; remap to upstream-published |
+| own package version | `@remnawave/backend-contract` | `libs/contract/package.json` | 3.4.16 (fork bump over upstream 3.4.15; frontend's `file:` filename must match) | revert for PR |
+| dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-3.4.2.tgz` | keep; remap to upstream-published |
 | endpoint RBAC scope | `user-inbounds-usage` | contract `getEndpointDetails` 4th arg | descriptive new scope | keep |
 
 No new **error codes** were added in backend (its `A2##` namespace is untouched). All other additions —
@@ -30,6 +30,22 @@ Removed in the rework: columns `nodes.track_inbound_user_usage` and
 `set-inbound-usage-tracking` endpoint/command/scope, and `internals.trackedInboundTags` on `StartXray`
 (hence the node-contract fork bump). `recordInboundUserUsage()` now runs for **every** online node — the node
 returns an empty result when no inbound opted in, so it is safe and self-gating.
+
+## 3.4.4 sync and publication
+
+Based on release `3.4.4`, with node `3.4.1` / fork node-contract `3.4.2`. Both existing fork
+migrations remain byte-identical. Fresh-database and seeded 3.3.2 upgrade rehearsals passed on
+PostgreSQL 17.6; only the two upstream host-exclusion/entity-tags migrations were applied during
+the upgrade, with usage and host exclusions preserved and no schema drift.
+
+The frontend dependency is pinned by commit and SHA-256 in `Dockerfile`, not the mutable
+`perinbound` release. CI verifies that release's recorded frontend run succeeded for the exact
+commit and that its backend-contract Git tree matches this checkout. Docker verifies the ZIP
+checksum again. A missing, failed, or mismatched artifact blocks publication.
+
+Publish contract source first with `[skip ci]`, then push frontend with that backend source SHA
+pinned and wait for its release. Finally update the Dockerfile's frontend commit/digest and push
+backend to build the image. Do not replace commit-addressed frontend artifacts.
 
 ## 3.3.2 sync notes (what changed vs the 2.8.0-era doc)
 
@@ -119,9 +135,8 @@ with a later timestamp instead of renaming these two.
 
 ## For PR / version handling
 
-- `libs/contract/package.json` is bumped to 2.8.36 because the contract shape changed; the frontend's
-  `file:vendor/remnawave-backend-contract-2.8.36.tgz` spec must be bumped in lockstep or npm serves a
-  stale cached tarball.
+- `libs/contract/package.json` is bumped to 3.4.16 because the contract shape changed; the frontend's
+  `file:vendor/remnawave-backend-contract-3.4.16.tgz` spec must be bumped in lockstep.
 - **Keep** the `@remnawave/node-contract` dependency-spec bump (feature needs the new node endpoint),
   remapping to the upstream-published version.
 - Lockfiles are isolated in a separate `chore:` commit; on rebase conflict take upstream then `npm install`.
