@@ -2,15 +2,15 @@ FROM alpine:3.19 AS frontend
 WORKDIR /opt/frontend
 
 ARG BRANCH=main
-# [remnawave-fork] serve the per-user-per-inbound frontend from OUR fork's release zip.
-# The frontend fork's fork-frontend.yml workflow builds remnawave-frontend.zip and (re)uploads it to a
-# release tagged `perinbound`. Pinned to that tag (not /latest/) so it resolves even as a prerelease.
-ARG FRONTEND_URL=https://github.com/kirisame-meguru/frontend/releases/download/perinbound/remnawave-frontend.zip
+# [remnawave-fork] Verified, commit-addressed frontend artifact; never consume a moving release.
+ARG FRONTEND_COMMIT=b042a2e0b6423e0b9be23539a4c6a13a45afe934
+ARG FRONTEND_SHA256=133c47d41ff5b3bedb29cee315f1528c3ffd4f6277b679e5f5f37e12eb65c872
 ARG SINGBOX_SCHEMA_URL=https://github.com/BlackDuty/sing-box-schema/releases/download/v1.13.13/schema.json
 ARG MIHOMO_SCHEMA_URL=https://github.com/dongchengjie/meta-json-schema/releases/download/v1.19.29/meta-json-schema.json
 
 RUN apk add --no-cache curl unzip ca-certificates \
-    && curl -L ${FRONTEND_URL} -o frontend.zip \
+    && curl -fsSL "https://github.com/kirisame-meguru/frontend/releases/download/perinbound-${FRONTEND_COMMIT}/remnawave-frontend.zip" -o frontend.zip \
+    && echo "${FRONTEND_SHA256}  frontend.zip" | sha256sum -c - \
     && unzip frontend.zip -d frontend_temp \
     && curl -L https://validator.remna.dev/wasm_exec.js -o frontend_temp/dist/assets/wasm_exec.js \
     && curl -L https://validator.remna.dev/xray.schema.json -o frontend_temp/dist/assets/xray.schema.json \
