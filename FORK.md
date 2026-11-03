@@ -9,7 +9,7 @@ on **`main`** (`main` is the feature branch). See `../FORK-RESILIENCE.md` for th
 |-----------|--------|------|-----------|----------------------------------|
 | prisma migration timestamp | `_per_user_per_inbound_usage`, `_drop_per_inbound_tracking_flags` | `prisma/migrations/<ts>_*/` | **pinned — never restamp** (see rule) | regenerate at PR |
 | own package version | `@remnawave/backend-contract` | `libs/contract/package.json` | 3.4.16 (fork bump over upstream 3.4.15; frontend's `file:` filename must match) | revert for PR |
-| dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-3.4.2.tgz` | keep; remap to upstream-published |
+| dependency spec (feature-required) | `@remnawave/node-contract` | `package.json` | `file:vendor/remnawave-node-contract-3.4.3.tgz` | keep; remap to upstream-published |
 | endpoint RBAC scope | `user-inbounds-usage` | contract `getEndpointDetails` 4th arg | descriptive new scope | keep |
 
 No new **error codes** were added in backend (its `A2##` namespace is untouched). All other additions —
@@ -33,8 +33,9 @@ returns an empty result when no inbound opted in, so it is safe and self-gating.
 
 ## 3.4.4 sync and publication
 
-Based on release `3.4.4`, with node `3.4.1` / fork node-contract `3.4.2`. Both existing fork
-migrations remain byte-identical. Fresh-database and seeded 3.3.2 upgrade rehearsals passed on
+Based on release `3.4.4`, with node `3.4.4` / fork node-contract `3.4.3`. The contract refresh
+includes upstream's removal of `CipherType.NONE`; backend-contract and frontend provenance are unchanged.
+Both existing fork migrations remain byte-identical. Fresh-database and seeded 3.3.2 upgrade rehearsals passed on
 PostgreSQL 17.6; only the two upstream host-exclusion/entity-tags migrations were applied during
 the upgrade, with usage and host exclusions preserved and no schema drift.
 
@@ -46,6 +47,18 @@ checksum again. A missing, failed, or mismatched artifact blocks publication.
 Publish contract source first with `[skip ci]`, then push frontend with that backend source SHA
 pinned and wait for its release. Finally update the Dockerfile's frontend commit/digest and push
 backend to build the image. Do not replace commit-addressed frontend artifacts.
+
+The versioned image is `ghcr.io/kirisame-meguru/backend:3.4.4` (linux/amd64), alongside `perinbound`
+and immutable commit tags. GitHub release `3.4.4-perinbound1` identifies the fork source, not the
+imported upstream `3.4.4` tag. Before upgrading, back up the database and retain `APP_SECRET`;
+set the Compose image to the versioned tag, pull, and recreate without deleting volumes.
+
+The refreshed node-contract consumer passed strict install, Prisma generation, TypeScript checking,
+and the production build. The existing frontend artifact's SHA-256, source commit, backend-contract
+tree, and successful producer run 35283415541 (attempt 1) were verified before the local build.
+GitHub Actions currently rejects dispatch as disabled; local publication retains the same Docker
+checksum gate and metadata as CI. The upstream-only `build-and-push.yml` workflow is disabled in
+this fork; use `fork-build.yml` once GitHub permits Actions.
 
 ## 3.3.2 sync notes (what changed vs the 2.8.0-era doc)
 
