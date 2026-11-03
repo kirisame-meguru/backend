@@ -55,10 +55,12 @@ set the Compose image to the versioned tag, pull, and recreate without deleting 
 
 The refreshed node-contract consumer passed strict install, Prisma generation, TypeScript checking,
 and the production build. The existing frontend artifact's SHA-256, source commit, backend-contract
-tree, and successful producer run 35283415541 (attempt 1) were verified before the local build.
-GitHub Actions currently rejects dispatch as disabled; local publication retains the same Docker
-checksum gate and metadata as CI. The upstream-only `build-and-push.yml` workflow is disabled in
-this fork; use `fork-build.yml` once GitHub permits Actions.
+tree, and successful producer run 35283415541 (attempt 1) were verified before publication.
+GitHub Actions run **41624338485** published the image from
+`867b97ed26be0386c91da4274a39e5d0d3f0d614`, retaining the frontend checksum gate and metadata.
+The initial HTTP 422 dispatch rejection cleared after refreshing CLI authentication.
+No locally built image was uploaded. The upstream-only `build-and-push.yml` workflow is disabled
+in this fork; publication uses `fork-build.yml`.
 
 ## 3.3.2 sync notes (what changed vs the 2.8.0-era doc)
 
